@@ -1,0 +1,18 @@
+<div>
+    <h1>Ok! Check your email or text messages for a&nbsp;code</h1>
+    <div>
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+    <form action="{% url "stagedoor:token-post" %}" method="post">
+        {% csrf_token %}
+        <div>
+            <label for="token">Token</label>
+            <input placeholder="••••••" />
+        </div>
+        <div>
+            <button type="submit">Submit</button>
+        </div>
+    </form>
+</div>

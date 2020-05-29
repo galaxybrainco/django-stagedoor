@@ -1,0 +1,13 @@
+<h1>Hello!</h1>
+
+<p>This email contains your secret {{ site_name }} login link. To log in,
+just click the link below. Please don't share it with anyone, as it
+can be used to log you in immediately.</p>
+
+<p><a href="https://{{ current_site.domain }}{% url "stagedoor:token-login" token %}">Click here to login.</a></p>
+<p>Or use code: {{ token }}</p>
+
+<p>If you did not request this login, please contact support at {{ support_email }}.</p>
+
+<p>Thanks, from:</p>
+<p>{{ site_name }}</p>

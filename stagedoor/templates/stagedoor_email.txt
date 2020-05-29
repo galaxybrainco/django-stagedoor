@@ -1,0 +1,14 @@
+Hello!
+
+This email contains your secret {{site_name}} login link. To log in,
+just click the link below. Please don't share it with anyone, as it
+can be used to log you in immediately.
+
+Go to: https://{{ current_site.domain }}{% url "stagedoor:token-login" token %}
+
+Or input code: {{token}}
+
+If you did not request this login, please contact support at {{support_email}}.
+
+Thanks, from:
+{{site_name}}
