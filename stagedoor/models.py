@@ -46,7 +46,7 @@ def generate_sms_token(phone_number, next_url, user=None):
             phone_number.potential_user = user
             phone_number.save()
             token = AuthToken.objects.create(
-                token=token_string, phone_number=phone_number, next_url=redirect_url,
+                token=token_string, phone_number=phone_number, next_url=next_url,
             )
             return token
 
@@ -66,7 +66,7 @@ def generate_email_token(email, next_url, user=None):
         email.potential_user = user
         email.save()
         token = AuthToken.objects.create(
-            token=token_string, email=email, next_url=redirect_url
+            token=token_string, email=email, next_url=next_url
         )
         return token
 

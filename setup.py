@@ -21,8 +21,8 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "twilio>=6.40.0,<6.50.0",
-        "django>=2.2,<4.0",
-        "django-phonenumber-field>=4.0.0,<4.1.0",
+        "django>=3.0,<4.2",
+        "django-phonenumber-field<7.1",
         "phonenumbers>=8.12.0,<8.13",
     ],
     url="https://github.com/galaxybrainco/django-stagedoor",
