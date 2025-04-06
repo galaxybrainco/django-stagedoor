@@ -33,10 +33,6 @@ packages = ["src/stagedoor"]
 [tool.isort]
 skip = [".venv", ".tox"]
 
-[tool.uv]
-package = false
-
-
 [tool.tox]
 requires = ["tox>=4.19"]
 
