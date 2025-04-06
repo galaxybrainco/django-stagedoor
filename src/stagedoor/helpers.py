@@ -1,12 +1,14 @@
+from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
+from django.http import HttpRequest
 from django.template.loader import get_template, render_to_string
-from django.conf import settings
+
 from . import settings as stagedoor_settings
-from .models import AuthToken, Email, PhoneNumber, generate_token_string
+from .models import AuthToken
 
 
-def email_login_link(request, token):
+def email_login_link(request: HttpRequest, token: AuthToken) -> None:
     current_site = get_current_site(request)
 
     # Send the link by email.
@@ -23,7 +25,7 @@ def email_login_link(request, token):
             request=request,
         ),
         from_email=stagedoor_settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[token.email.email],
+        recipient_list=[token.email.email], # type: ignore
         html_message=get_template(stagedoor_settings.EMAIL_HTML_TEMPLATE).render(
             {
                 "current_site": current_site,
@@ -36,7 +38,7 @@ def email_login_link(request, token):
     )
 
 
-def sms_login_link(request, token):
+def sms_login_link(request: HttpRequest, token: AuthToken) -> None:
     current_site = get_current_site(request)
     if (
         hasattr(settings, "TWILIO_ACCOUNT_SID")
@@ -49,8 +51,8 @@ def sms_login_link(request, token):
         from twilio.rest import Client
 
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        message = client.messages.create(
+        client.messages.create(
             body=f"Your {stagedoor_settings.SITE_NAME} code is {token.token}\n\nGo to https://{current_site.domain}/auth/token to login.",
             from_=settings.TWILIO_NUMBER,
-            to=str(token.phone_number.phone_number),
+            to=str(token.phone_number.phone_number), # type: ignore
         )

@@ -1,31 +1,24 @@
+from urllib.parse import parse_qs, urlparse
+
 from django import forms
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
 from django.contrib.auth.decorators import login_required
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
-
 from phonenumber_field.formfields import PhoneNumberField
-
-from django.core.validators import validate_email
-from django.core.validators import ValidationError
-
 from phonenumber_field.validators import validate_international_phonenumber
 
 from . import settings as stagedoor_settings
 from .helpers import email_login_link, sms_login_link
-from .models import (
-    AuthToken,
-    Email,
-    PhoneNumber,
-    generate_email_token,
-    generate_sms_token,
-    generate_token_string,
-)
+from .models import generate_token
 
 
 class LoginForm(forms.Form):
@@ -47,7 +40,8 @@ class LoginForm(forms.Form):
         if stagedoor_settings.ENABLE_SMS and stagedoor_settings.ENABLE_EMAIL:
             label = "Your phone number or email"
 
-        self.fields["contact"] = contact = forms.CharField(label=label, required=False)
+        self.fields["contact"] = forms.CharField(label=label, required=False)
+        self.fields["next"] = forms.CharField(required=False)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -79,28 +73,30 @@ class LoginForm(forms.Form):
 
 
 @require_http_methods(["POST"])
-def login_post(request):
+def login_post(request: HttpRequest) -> HttpResponse:
     """Process the submission of the form with the user's email and mail them a link."""
     form = LoginForm(request.POST)
     if not form.is_valid():
         messages.error(
-            request, _("Please use a valid email address or phone number."),
+            request,
+            _("Please use a valid email address or phone number."),
         )
         return redirect(stagedoor_settings.LOGIN_URL)
 
     email = form.cleaned_data["email"]
     phone_number = form.cleaned_data["phone_number"]
 
-    redirect_url = ""
-    if request.GET and request.GET.get("next"):
-        redirect_url = request.GET.get("next", "")
+    if next_url := parse_qs(urlparse(request.get_full_path()).query).get("next"):
+        next_url = next_url[0]
+    else:
+        next_url = ""
 
     if email:
-        token = generate_email_token(email, next_url=redirect_url, user=request.user)
-        if token:
+        if token := generate_token(email=email, next_url=next_url, user=request.user):
             email_login_link(request=request, token=token)
             messages.success(
-                request, _("Check your email to log in!"),
+                request,
+                _("Check your email to log in!"),
             )
             return redirect(reverse("stagedoor:token-post"))
         else:
@@ -108,13 +104,13 @@ def login_post(request):
             return redirect(stagedoor_settings.LOGIN_URL)
 
     elif phone_number:
-        token = generate_sms_token(
-            phone_number, next_url=redirect_url, user=request.user
-        )
-        if token:
+        if token := generate_token(
+            phone_number=phone_number, next_url=next_url, user=request.user
+        ):
             sms_login_link(request=request, token=token)
             messages.success(
-                request, _("Check your text messages to log in!"),
+                request,
+                _("Check your text messages to log in!"),
             )
             return redirect(reverse("stagedoor:token-post"))
         else:
@@ -124,7 +120,7 @@ def login_post(request):
     return redirect(stagedoor_settings.LOGIN_URL)
 
 
-def process_token(request, token):
+def process_token(request: HttpRequest, token: str | None) -> HttpResponse:
     user = authenticate(request, token=token)
     if user is None:
         messages.error(
@@ -138,10 +134,10 @@ def process_token(request, token):
 
     if hasattr(user, "_stagedoor_next_url"):
         # Get the next URL from the user object, if it was set by our custom `authenticate`.
-        next_url = user._stagedoor_next_url
+        next_url = user._stagedoor_next_url # type: ignore
 
         # Remove the next URL from the user object.
-        del user._stagedoor_next_url
+        del user._stagedoor_next_url # type: ignore
     else:
         next_url = stagedoor_settings.LOGIN_REDIRECT
 
@@ -151,7 +147,7 @@ def process_token(request, token):
     return redirect(next_url)
 
 
-def token_post(request):
+def token_post(request: HttpRequest) -> HttpResponse:
     if request.POST:
         token = request.POST.get("token")
         return process_token(request, token)
@@ -159,13 +155,13 @@ def token_post(request):
 
 
 @require_http_methods(["GET"])
-def token_login(request, token):
+def token_login(request: HttpRequest, token: str) -> HttpResponse:
     """Validate the token the user submitted."""
     return process_token(request, token)
 
 
-@login_required
-def logout(request):
+@login_required # type: ignore
+def logout(request: HttpRequest) -> HttpResponse:
     django_logout(request)
     messages.success(request, _("You have been logged out."))
     return redirect(stagedoor_settings.LOGOUT_REDIRECT)

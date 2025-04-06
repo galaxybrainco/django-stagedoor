@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-stagedoor"
+dynamic = ["version"]
+description = "A Django app for passwordless login with SMS and Email"
+readme = "README.md"
+license = "Apache 2.0"
+requires-python = ">=3.9"
+authors = [{ name = "Philip James", email = "phildini@phildini.net" }]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+    "django-phonenumber-field<7.1",
+    "django>=3.0,<4.2",
+    "phonenumbers>=8.12.0,<8.13",
+    "twilio>=6.40.0,<6.50.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/galaxybrainco/django-stagedoor"
+
+[tool.hatch.version]
+path = "stagedoor/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/stagedoor"]

@@ -1,0 +1,47 @@
+[project]
+name = "django-stagedoor"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.9"
+readme = "README.md"
+authors = [
+    { name = "Philip James", email = "phildini@phildini.net" }
+]
+dependencies = [
+    "django>=4.2",
+    "django-phonenumber-field[phonenumbers]>=8.0.0",
+    "twilio>=9.5.1",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.8.0",
+    "ipdb>=0.13.13",
+    "isort>=6.0.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/stagedoor"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stagedoor"]
+
+[tool.isort]
+skip = [".venv", ".tox"]
+
+[tool.uv]
+package = false
+
+
+[tool.tox]
+requires = ["tox>=4.19"]
+env_list = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.tox.env_run_base]
+allowlist_externals = ["coverage"]
+description = "Run test under {base_python}"
+commands = [["coverage", "run", "runtests.py"]]

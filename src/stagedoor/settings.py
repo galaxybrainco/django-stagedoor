@@ -1,6 +1,5 @@
 from django.conf import settings
 
-
 TOKEN_DURATION = getattr(settings, "STAGEDOOR_TOKEN_DURATION", 30 * 60)
 
 EMAIL_TOKEN_LENGTH = getattr(settings, "STAGEDOOR_EMAIL_TOKEN_LENGTH", 8)

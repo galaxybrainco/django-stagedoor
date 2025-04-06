@@ -1,48 +1,49 @@
-from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase
 
-from stagedoor.backends import EmailTokenBackend, SMSTokenBackend, StageDoorBackendMixin
-from stagedoor.models import AuthToken, Email, PhoneNumber, generate_token_string
+from stagedoor.backends import (EmailTokenBackend, SMSTokenBackend,
+                                StageDoorBackend)
+from stagedoor.models import (AuthToken, Email, PhoneNumber,
+                              generate_token_string)
 
 
-class StageDoorBackendMixinTests(TestCase):
+class StageDoorBackendTests(TestCase):
     def test_get_user_happy_path(self):
-        backend = StageDoorBackendMixin()
+        backend = StageDoorBackend()
         user = get_user_model().objects.create()
 
-        user_from_backend = backend.get_user(user_id=user.id)
+        user_from_backend = backend.get_user(user_id=user.id) # type: ignore
 
         self.assertEqual(user, user_from_backend)
 
     def test_get_user_no_user(self):
-        backend = StageDoorBackendMixin()
+        backend = StageDoorBackend()
         user_from_backend = backend.get_user(user_id=7)
         self.assertEqual(None, user_from_backend)
 
     def test_authenticate_happy_path(self):
-        backend = StageDoorBackendMixin()
-        token_string = generate_token_string(email=True)
-        token = AuthToken.objects.create(token=token_string)
+        backend = StageDoorBackend()
+        token_string = generate_token_string()
+        AuthToken.objects.create(token=token_string)
 
         user = backend.authenticate(None, token_string)
 
         self.assertIsNotNone(user)
 
     def test_authenticate_no_token(self):
-        backend = StageDoorBackendMixin()
-        token_string = generate_token_string(email=True)
+        backend = StageDoorBackend()
+        token_string = generate_token_string()
 
         user = backend.authenticate(None, token_string)
 
         self.assertIsNone(user)
 
     def test_single_use_token(self):
-        backend = StageDoorBackendMixin()
+        backend = StageDoorBackend()
         user = get_user_model().objects.create()
 
-        user_from_backend = backend.get_user(user_id=user.id)
+        user_from_backend = backend.get_user(user_id=user.id) # type: ignore
 
         self.assertEqual(user, user_from_backend)
 
@@ -53,13 +54,13 @@ class EmailBackendTests(TestCase):
     def test_happy_path(self):
 
         email = Email.objects.create(email="hello@hellocaller.app")
-        token_string = generate_token_string(email=True)
-        token = AuthToken.objects.create(email=email, token=token_string)
+        token_string = generate_token_string()
+        AuthToken.objects.create(email=email, token=token_string)
 
         backend = EmailTokenBackend()
         user = backend.authenticate(None, token=token_string)
         self.assertIsNotNone(user)
-        self.assertEqual("hello@hellocaller.app", user.email)
+        self.assertEqual("hello@hellocaller.app", user.email) # type: ignore
         email.refresh_from_db()
         self.assertEqual(user, email.user)
 
@@ -71,22 +72,22 @@ class EmailBackendTests(TestCase):
 
     def test_user_already_exists(self):
         email = Email.objects.create(email="hello@hellocaller.app")
-        token_string = generate_token_string(email=True)
-        token = AuthToken.objects.create(email=email, token=token_string)
+        token_string = generate_token_string()
+        AuthToken.objects.create(email=email, token=token_string)
         backend = EmailTokenBackend()
         user = backend.authenticate(None, token=token_string)
         self.assertIsNotNone(user)
-        self.assertEqual("hello@hellocaller.app", user.email)
+        self.assertEqual("hello@hellocaller.app", user.email) # type: ignore
         email.refresh_from_db()
         self.assertEqual(user, email.user)
 
         # Now try again, and make sure we get the same user
-        token_string = generate_token_string(email=True)
-        token = AuthToken.objects.create(email=email, token=token_string)
+        token_string = generate_token_string()
+        AuthToken.objects.create(email=email, token=token_string)
         user = backend.authenticate(None, token=token_string)
         email.refresh_from_db()
         self.assertIsNotNone(user)
-        self.assertEqual("hello@hellocaller.app", user.email)
+        self.assertEqual("hello@hellocaller.app", user.email) # type: ignore
         self.assertEqual(user, email.user)
 
 
@@ -95,7 +96,7 @@ class SMSBackendTests(TestCase):
 
         phone_number = PhoneNumber.objects.create(phone_number="+14158675309")
         token_string = generate_token_string(sms=True)
-        token = AuthToken.objects.create(phone_number=phone_number, token=token_string)
+        AuthToken.objects.create(phone_number=phone_number, token=token_string)
 
         backend = SMSTokenBackend()
         user = backend.authenticate(None, token=token_string)
@@ -112,7 +113,7 @@ class SMSBackendTests(TestCase):
     def test_user_already_exists(self):
         phone_number = PhoneNumber.objects.create(phone_number="+14158675309")
         token_string = generate_token_string(sms=True)
-        token = AuthToken.objects.create(phone_number=phone_number, token=token_string)
+        AuthToken.objects.create(phone_number=phone_number, token=token_string)
         backend = SMSTokenBackend()
         user = backend.authenticate(None, token=token_string)
         self.assertIsNotNone(user)
@@ -121,7 +122,7 @@ class SMSBackendTests(TestCase):
 
         # Now try again, and make sure we get the same user
         token_string = generate_token_string(sms=True)
-        token = AuthToken.objects.create(phone_number=phone_number, token=token_string)
+        AuthToken.objects.create(phone_number=phone_number, token=token_string)
         user = backend.authenticate(None, token=token_string)
         self.assertIsNotNone(user)
         phone_number = PhoneNumber.objects.get(phone_number="+14158675309")

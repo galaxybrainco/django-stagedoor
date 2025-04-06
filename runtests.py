@@ -10,13 +10,13 @@ different settings and/or templates to run their tests.
 import os
 import sys
 
-
-APP_DIR = os.path.abspath(os.path.dirname(__file__))
+APP_DIR = os.path.abspath(f"{os.path.dirname(__file__)}/src")
 
 
 # Minimum settings required for the app's tests.
 SETTINGS_DICT = {
     "BASE_DIR": APP_DIR,
+    "SECRET_KEY": "a-secret-key",
     "INSTALLED_APPS": (
         "django.contrib.auth",
         "django.contrib.contenttypes",

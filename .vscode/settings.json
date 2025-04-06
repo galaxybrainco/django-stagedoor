@@ -1,0 +1,22 @@
+{
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.completeFunctionParens": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "editor.formatOnSave": true,
+    "testing.coverageToolbarEnabled": true,
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.showRulerCoverage": true,
+    "coverage-gutters.coverageFileNames": [
+        ".coverage",
+        "coverage.xml"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.exclude": [
+        ".venv",
+        "**/__pycache__",
+        ".tox",
+        "**/tests"
+    ],
+}
