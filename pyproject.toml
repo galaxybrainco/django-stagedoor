@@ -2,7 +2,7 @@
 name = "django-stagedoor"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 authors = [
     { name = "Philip James", email = "phildini@phildini.net" }
