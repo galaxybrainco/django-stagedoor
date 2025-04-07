@@ -49,6 +49,9 @@ class StageDoorBackend(BaseBackend):
             ]:
                 user_args["username"] = f"u{generate_token_string()[:8]}"
 
+        if stagedoor_settings.DISABLE_USER_CREATION:
+            user = User.objects.get(**user_args)
+        else:
             user, created = User.objects.get_or_create(**user_args)
 
         if token_object.next_url:
