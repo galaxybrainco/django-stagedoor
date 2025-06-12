@@ -55,15 +55,17 @@ class StageDoorBackend(BaseBackend):
             user, created = User.objects.get_or_create(**user_args)
 
         if token_object.next_url:
-            user._stagedoor_next_url = token_object.next_url # type: ignore
+            user._stagedoor_next_url = token_object.next_url  # type: ignore
 
         return user
 
 
 class EmailTokenBackend(StageDoorBackend):
     def authenticate(
-        self, request, token: str | int
+        self, request, token: str | int | None = None
     ) -> AbstractUser | None:
+        if not token:
+            return None
         token_object = self.get_token_object(token)
         if not token_object:
             return None
@@ -96,8 +98,10 @@ class EmailTokenBackend(StageDoorBackend):
 
 class SMSTokenBackend(StageDoorBackend):
     def authenticate(
-        self, request, token: str | int
+        self, request, token: str | int | None = None
     ) -> AbstractUser | None:
+        if not token:
+            return None
         token_object = self.get_token_object(token)
         if not token_object:
             return None
@@ -120,7 +124,7 @@ class SMSTokenBackend(StageDoorBackend):
         if "phone_number" in [
             field.name for field in User._meta.get_fields(include_hidden=True)
         ]:
-            user.phone_number = phone_number.phone_number # type: ignore
+            user.phone_number = phone_number.phone_number  # type: ignore
         if stagedoor_settings.SINGLE_USE_LINK:
             token_object.delete()
         user.save()

@@ -86,10 +86,9 @@ def login_post(request: HttpRequest) -> HttpResponse:
     email = form.cleaned_data["email"]
     phone_number = form.cleaned_data["phone_number"]
 
-    if next_url := parse_qs(urlparse(request.get_full_path()).query).get("next"):
-        next_url = next_url[0]
-    else:
-        next_url = ""
+    next_url: str | None = ""
+    if parsed_next_url := parse_qs(urlparse(request.get_full_path()).query).get("next"):
+        next_url = parsed_next_url[0]
 
     if email:
         if token := generate_token(email=email, next_url=next_url, user=request.user):
@@ -134,10 +133,10 @@ def process_token(request: HttpRequest, token: str | None) -> HttpResponse:
 
     if hasattr(user, "_stagedoor_next_url"):
         # Get the next URL from the user object, if it was set by our custom `authenticate`.
-        next_url = user._stagedoor_next_url # type: ignore
+        next_url = user._stagedoor_next_url  # type: ignore
 
         # Remove the next URL from the user object.
-        del user._stagedoor_next_url # type: ignore
+        del user._stagedoor_next_url  # type: ignore
     else:
         next_url = stagedoor_settings.LOGIN_REDIRECT
 
@@ -160,7 +159,7 @@ def token_login(request: HttpRequest, token: str) -> HttpResponse:
     return process_token(request, token)
 
 
-@login_required # type: ignore
+@login_required  # type: ignore
 def logout(request: HttpRequest) -> HttpResponse:
     django_logout(request)
     messages.success(request, _("You have been logged out."))

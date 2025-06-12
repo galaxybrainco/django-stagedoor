@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
@@ -8,8 +7,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from stagedoor import settings as stagedoor_settings
-from stagedoor.models import (AuthToken, Email, PhoneNumber,
-                              generate_token_string)
+from stagedoor.models import AuthToken, Email, PhoneNumber, generate_token_string
 from stagedoor.views import login_post, token_post
 
 TEST_EMAIL = "hello@hellocaller.app"
@@ -23,11 +21,11 @@ class LoginPostTests(TestCase):
         def get_response():
             return HttpResponse()
 
-        middleware = SessionMiddleware(get_response=get_response) # type: ignore
+        middleware = SessionMiddleware(get_response=get_response)  # type: ignore
         middleware.process_request(request)
         request.session.save()
 
-        middleware = MessageMiddleware(get_response=get_response) # type: ignore
+        middleware = MessageMiddleware(get_response=get_response)  # type: ignore
         middleware.process_request(request)
         request.session.save()
 
@@ -37,18 +35,17 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url) # type: ignore
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(Email.objects.filter(email=TEST_EMAIL).first())
         self.assertIsNotNone(AuthToken.objects.filter(email__email=TEST_EMAIL).first())
 
     def test_happy_path_phone(self):
-
         factory = RequestFactory()
         request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url) # type: ignore
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(
             PhoneNumber.objects.filter(phone_number=TEST_PHONE_NUMBER).first()
         )
@@ -59,13 +56,12 @@ class LoginPostTests(TestCase):
         )
 
     def test_happy_path_contact_phone(self):
-
         factory = RequestFactory()
         request = factory.post("/", {"contact": TEST_PHONE_NUMBER})
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(
             PhoneNumber.objects.filter(phone_number=TEST_PHONE_NUMBER).first()
         )
@@ -76,37 +72,34 @@ class LoginPostTests(TestCase):
         )
 
     def test_happy_path_contact_email(self):
-
         factory = RequestFactory()
         request = factory.post("/", {"contact": TEST_EMAIL})
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(Email.objects.filter(email=TEST_EMAIL).first())
         self.assertIsNotNone(AuthToken.objects.filter(email__email=TEST_EMAIL).first())
 
     def test_no_form_data(self):
-
         factory = RequestFactory()
         request = factory.post("/")
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)
+        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)  # type: ignore
         self.assertEqual(0, len(Email.objects.all()))
         self.assertEqual(0, len(PhoneNumber.objects.all()))
         self.assertEqual(0, len(AuthToken.objects.all()))
 
     @override_settings(STAGEDOOR_ENABLE_EMAIL_OVERRIDE=True)
     def test_form_invalid_email(self):
-
         factory = RequestFactory()
         request = factory.post("/", {"email": "hi"})
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)
+        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)  # type: ignore
         self.assertEqual(0, len(Email.objects.all()))
         self.assertEqual(0, len(PhoneNumber.objects.all()))
         self.assertEqual(0, len(AuthToken.objects.all()))
@@ -117,7 +110,7 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)
+        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)  # type: ignore
         self.assertEqual(0, len(Email.objects.all()))
         self.assertEqual(0, len(PhoneNumber.objects.all()))
         self.assertEqual(0, len(AuthToken.objects.all()))
@@ -125,7 +118,6 @@ class LoginPostTests(TestCase):
     @override_settings(STAGEDOOR_ENABLE_EMAIL_OVERRIDE=True)
     @override_settings(STAGEDOOR_ENABLE_SMS_OVERRIDE=True)
     def test_email_and_phone(self):
-
         factory = RequestFactory()
         request = factory.post(
             "/", {"phone_number": TEST_PHONE_NUMBER, "email": TEST_EMAIL}
@@ -133,7 +125,7 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(Email.objects.filter(email=TEST_EMAIL).first())
         self.assertIsNotNone(AuthToken.objects.filter(email__email=TEST_EMAIL).first())
 
@@ -144,11 +136,12 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(Email.objects.filter(email=TEST_EMAIL).first())
         self.assertIsNotNone(AuthToken.objects.filter(email__email=TEST_EMAIL).first())
         self.assertEqual(
-            "/next", AuthToken.objects.filter(email__email=TEST_EMAIL).first().next_url
+            "/next",
+            AuthToken.objects.filter(email__email=TEST_EMAIL).first().next_url,  # type: ignore
         )
 
     @override_settings(STAGEDOOR_ENABLE_EMAIL_OVERRIDE=True)
@@ -159,7 +152,7 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(Email.objects.get(email=TEST_EMAIL))
         self.assertIsNotNone(AuthToken.objects.filter(email__email=TEST_EMAIL).first())
 
@@ -171,7 +164,7 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         response = login_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("stagedoor:token-post"), response.url)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
         self.assertIsNotNone(PhoneNumber.objects.get(phone_number=TEST_PHONE_NUMBER))
         self.assertIsNotNone(
             AuthToken.objects.filter(
@@ -184,14 +177,14 @@ class TokenPostTests(TestCase):
     def setup_request(self, request):
         request.user = AnonymousUser()
 
-        def get_response():
+        def get_response() -> HttpResponse:
             return HttpResponse()
 
-        middleware = SessionMiddleware(get_response=get_response)
+        middleware = SessionMiddleware(get_response=get_response)  # type: ignore
         middleware.process_request(request)
         request.session.save()
 
-        middleware = MessageMiddleware(get_response=get_response)
+        middleware = MessageMiddleware(get_response=get_response)  # type: ignore
         middleware.process_request(request)
         request.session.save()
 
@@ -206,7 +199,7 @@ class TokenPostTests(TestCase):
         self.setup_request(request)
         response = token_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(stagedoor_settings.LOGIN_REDIRECT, response.url)
+        self.assertEqual(stagedoor_settings.LOGIN_REDIRECT, response.url)  # type: ignore
         self.assertEqual(num_users + 1, len(get_user_model().objects.all()))
 
     def test_bad_token(self):
@@ -218,7 +211,7 @@ class TokenPostTests(TestCase):
         self.setup_request(request)
         response = token_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)
+        self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)  # type: ignore
         self.assertEqual(num_users, len(get_user_model().objects.all()))
 
     def test_happy_path_render(self):
@@ -232,40 +225,34 @@ class TokenPostTests(TestCase):
         num_users = len(get_user_model().objects.all())
         email = Email.objects.create(email=TEST_EMAIL)
         token_string = generate_token_string()
-        AuthToken.objects.create(
-            email=email, token=token_string, next_url="/next"
-        )
+        AuthToken.objects.create(email=email, token=token_string, next_url="/next")
         factory = RequestFactory()
         request = factory.post("/", {"token": token_string})
         self.setup_request(request)
         response = token_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual("/next", response.url) # type: ignore
+        self.assertEqual("/next", response.url)  # type: ignore
         self.assertEqual(num_users + 1, len(get_user_model().objects.all()))
 
     def test_happy_path_redirect_user_already_exists(self):
         num_users = len(get_user_model().objects.all())
         email = Email.objects.create(email=TEST_EMAIL)
         token_string = generate_token_string()
-        token = AuthToken.objects.create(
-            email=email, token=token_string, next_url="/next"
-        )
+        AuthToken.objects.create(email=email, token=token_string, next_url="/next")
         factory = RequestFactory()
         request = factory.post("/", {"token": token_string})
         self.setup_request(request)
         response = token_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual("/next", response.url)
+        self.assertEqual("/next", response.url)  # type: ignore
         self.assertEqual(num_users + 1, len(get_user_model().objects.all()))
 
         # Now try again, and make sure users haven't gone up.
         token_string = generate_token_string()
-        AuthToken.objects.create(
-            email=email, token=token_string, next_url="/othernext"
-        )
+        AuthToken.objects.create(email=email, token=token_string, next_url="/othernext")
         request = factory.post("/", {"token": token_string})
         self.setup_request(request)
         response = token_post(request)
         self.assertEqual(302, response.status_code)
-        self.assertEqual("/othernext", response.url)
+        self.assertEqual("/othernext", response.url)  # type: ignore
         self.assertEqual(num_users + 1, len(get_user_model().objects.all()))
