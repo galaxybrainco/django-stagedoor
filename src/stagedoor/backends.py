@@ -43,16 +43,13 @@ class StageDoorBackend(BaseBackend):
         if token_object.phone_number and token_object.phone_number.user:
             user = token_object.phone_number.user
 
-        if not user:
+        if not user and not stagedoor_settings.DISABLE_USER_CREATION:
             if "username" in [
                 field.name for field in User._meta.get_fields(include_hidden=True)
             ]:
                 user_args["username"] = f"u{generate_token_string()[:8]}"
 
-        if stagedoor_settings.DISABLE_USER_CREATION:
-            user = User.objects.get(**user_args)
-        else:
-            user, created = User.objects.get_or_create(**user_args)
+            user, _ = User.objects.get_or_create(**user_args)
 
         if token_object.next_url:
             user._stagedoor_next_url = token_object.next_url  # type: ignore
