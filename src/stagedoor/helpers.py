@@ -41,7 +41,18 @@ def email_login_link(request: HttpRequest, token: AuthToken) -> None:
 def email_admin_approval(request: HttpRequest, token: AuthToken) -> None:
     current_site = get_current_site(request)
 
-    # Send the link by email.
+    # Determine the contact info for the approval request
+    if token.email:
+        contact_info = token.email.email
+        contact_type = "email"
+    elif token.phone_number:
+        contact_info = str(token.phone_number.phone_number)
+        contact_type = "phone number"
+    else:
+        contact_info = "unknown"
+        contact_type = "contact method"
+
+    # Send the approval request email to support/admin email
     send_mail(
         subject=f"New account created on {stagedoor_settings.SITE_NAME}",
         message=render_to_string(
@@ -51,17 +62,21 @@ def email_admin_approval(request: HttpRequest, token: AuthToken) -> None:
                 "token": token.token,
                 "site_name": stagedoor_settings.SITE_NAME,
                 "support_email": stagedoor_settings.SUPPORT_EMAIL,
+                "contact_info": contact_info,
+                "contact_type": contact_type,
             },
             request=request,
         ),
         from_email=stagedoor_settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[token.email.email],  # type: ignore
+        recipient_list=[stagedoor_settings.SUPPORT_EMAIL],
         html_message=get_template(stagedoor_settings.APPROVAL_HTML_TEMPLATE).render(
             {
                 "current_site": current_site,
                 "token": token.token,
                 "site_name": stagedoor_settings.SITE_NAME,
                 "support_email": stagedoor_settings.SUPPORT_EMAIL,
+                "contact_info": contact_info,
+                "contact_type": contact_type,
             },
         ),
         fail_silently=False,
