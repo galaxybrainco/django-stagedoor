@@ -1,6 +1,6 @@
 import logging
-import random
 from datetime import timedelta
+from random import SystemRandom
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -87,7 +87,7 @@ def generate_token_string(sms: bool = False) -> str:
         charset = "123456789"
         token_length = stagedoor_settings.SMS_TOKEN_LENGTH
 
-    return "".join([random.choice(charset) for _ in range(token_length)])
+    return "".join([SystemRandom().choice(charset) for _ in range(token_length)])
 
 
 def generate_token(

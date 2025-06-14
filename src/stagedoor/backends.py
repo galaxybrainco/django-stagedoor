@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser
 
 from . import settings as stagedoor_settings
 from .models import AuthToken, Email, generate_token_string
 
 
 class StageDoorBackend(BaseBackend):
-    def get_user(self, user_id: int | str) -> AbstractUser | None:
+    def get_user(self, user_id: int | str) -> AbstractBaseUser | None:
         """Get a user by their primary key."""
         User = get_user_model()
         try:
@@ -22,7 +22,7 @@ class StageDoorBackend(BaseBackend):
 
     def authenticate(
         self, request, token: str | int | None = None
-    ) -> AbstractUser | None:
+    ) -> AbstractBaseUser | None:
         """Authenticate a user given a token"""
         user = None
         AuthToken.delete_stale()
@@ -68,7 +68,7 @@ class StageDoorBackend(BaseBackend):
 class EmailTokenBackend(StageDoorBackend):
     def authenticate(
         self, request, token: str | int | None = None
-    ) -> AbstractUser | None:
+    ) -> AbstractBaseUser | None:
         if not token:
             return None
         token_object = self.get_token_object(token)
@@ -93,7 +93,7 @@ class EmailTokenBackend(StageDoorBackend):
         if "email" in [
             field.name for field in User._meta.get_fields(include_hidden=True)
         ]:
-            user.email = email.email
+            user.email = email.email  # type: ignore
         if stagedoor_settings.SINGLE_USE_LINK:
             token_object.delete()
         user.save()
@@ -104,7 +104,7 @@ class EmailTokenBackend(StageDoorBackend):
 class SMSTokenBackend(StageDoorBackend):
     def authenticate(
         self, request, token: str | int | None = None
-    ) -> AbstractUser | None:
+    ) -> AbstractBaseUser | None:
         if not token:
             return None
         token_object = self.get_token_object(token)

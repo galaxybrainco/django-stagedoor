@@ -33,22 +33,22 @@ class TestEmailModel:
 
     def test_email_with_user(self):
         """Test email with associated user."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         email = Email.objects.create(email="test@example.com", user=user)
         assert email.user == user
         assert email.potential_user is None
 
     def test_email_with_potential_user(self):
         """Test email with potential user."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         email = Email.objects.create(email="test@example.com", potential_user=user)
         assert email.user is None
         assert email.potential_user == user
 
     def test_email_str_representation(self):
         """Test string representation of email."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
-        potential_user = User.objects.create_user(
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
+        potential_user = User.objects.create_user(  # type: ignore
             username="potential", email="potential@example.com"
         )
         email = Email.objects.create(
@@ -66,7 +66,7 @@ class TestEmailModel:
 
     def test_email_cascade_delete_user(self):
         """Test that deleting user cascades to email."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         email = Email.objects.create(email="test@example.com", user=user)
 
         user.delete()
@@ -74,7 +74,7 @@ class TestEmailModel:
 
     def test_email_cascade_delete_potential_user(self):
         """Test that deleting potential user cascades to email."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         email = Email.objects.create(email="test@example.com", potential_user=user)
 
         user.delete()
@@ -94,15 +94,15 @@ class TestPhoneNumberModel:
 
     def test_phone_number_with_user(self):
         """Test phone number with associated user."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         phone = PhoneNumber.objects.create(phone_number="+14155551234", user=user)
         assert phone.user == user
         assert phone.potential_user is None
 
     def test_phone_number_str_representation(self):
         """Test string representation of phone number."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
-        potential_user = User.objects.create_user(
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
+        potential_user = User.objects.create_user(  # type: ignore
             username="potential", email="potential@example.com"
         )
         phone = PhoneNumber.objects.create(
@@ -120,7 +120,7 @@ class TestPhoneNumberModel:
 
     def test_phone_number_cascade_delete_user(self):
         """Test that deleting user cascades to phone number."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
         phone = PhoneNumber.objects.create(phone_number="+14155551234", user=user)
 
         user.delete()
@@ -334,7 +334,7 @@ class TestGenerateToken:
 
     def test_generate_token_authenticated_user_new_email(self):
         """Test generating token for authenticated user with new email."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
 
         token = generate_token(email="new@example.com", user=user)
 
@@ -356,8 +356,8 @@ class TestGenerateToken:
 
     def test_generate_token_user_email_conflict(self):
         """Test generating token when email belongs to different user."""
-        user1 = User.objects.create_user(username="user1", email="user1@example.com")
-        user2 = User.objects.create_user(username="user2", email="user2@example.com")
+        user1 = User.objects.create_user(username="user1", email="user1@example.com")  # type: ignore
+        user2 = User.objects.create_user(username="user2", email="user2@example.com")  # type: ignore
 
         # Create email associated with user1
         Email.objects.create(email="conflict@example.com", user=user1)
@@ -369,8 +369,8 @@ class TestGenerateToken:
 
     def test_generate_token_user_phone_conflict(self):
         """Test generating token when phone belongs to different user."""
-        user1 = User.objects.create_user(username="user1", email="user1@example.com")
-        user2 = User.objects.create_user(username="user2", email="user2@example.com")
+        user1 = User.objects.create_user(username="user1", email="user1@example.com")  # type: ignore
+        user2 = User.objects.create_user(username="user2", email="user2@example.com")  # type: ignore
 
         # Create phone associated with user1
         PhoneNumber.objects.create(phone_number="+14155551234", user=user1)
@@ -382,7 +382,7 @@ class TestGenerateToken:
 
     def test_generate_token_user_owns_email(self):
         """Test generating token when user owns the email."""
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        user = User.objects.create_user(username="testuser", email="test@example.com")  # type: ignore
 
         # Create email owned by user
         email = Email.objects.create(email="owned@example.com", user=user)

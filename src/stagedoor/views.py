@@ -45,6 +45,8 @@ class LoginForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        if not cleaned_data:
+            return self.cleaned_data
         form_email = cleaned_data.get("email")
         form_phone_number = cleaned_data.get("phone_number")
 
