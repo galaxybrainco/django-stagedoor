@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Email(models.Model):
-
     email = models.EmailField(unique=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -36,7 +35,6 @@ class Email(models.Model):
 
 
 class PhoneNumber(models.Model):
-
     phone_number = PhoneNumberField(
         help_text="Must include international prefix - e.g. +1 555 555 55555",
         unique=True,
@@ -63,17 +61,16 @@ class PhoneNumber(models.Model):
 class AuthToken(models.Model):
     token = models.CharField(max_length=200, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
-    email = models.ForeignKey(
-        Email, blank=True, null=True, on_delete=models.CASCADE
-    )
+    email = models.ForeignKey(Email, blank=True, null=True, on_delete=models.CASCADE)
     phone_number = models.ForeignKey(
         PhoneNumber, blank=True, null=True, on_delete=models.CASCADE
     )
     next_url = models.CharField(max_length=2000, blank=True)
+    approved = models.BooleanField(default=True)
 
     @classmethod
     def delete_stale(cls) -> None:
-        """Delete stale tokens, ie tokens that are more than TOKEN_DURATION seconds older."""
+        """Delete stale tokens; tokens that are more than TOKEN_DURATION seconds old"""
         cls.objects.filter(
             timestamp__lt=now() - timedelta(seconds=stagedoor_settings.TOKEN_DURATION)
         ).delete()
@@ -113,7 +110,6 @@ def generate_token(
             phone_number=phone_number,
         )
         object = phone_number_object
-    
     if not object:
         logger.error("Tried to generate a token for neither email nor sms")
         return None
@@ -122,7 +118,7 @@ def generate_token(
         token=token_string,
         email=email_object,
         phone_number=phone_number_object,
-        next_url=next_url,
+        next_url=next_url or "",
     )
 
     if (not user or not user.is_authenticated) or created:

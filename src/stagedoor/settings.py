@@ -34,6 +34,13 @@ EMAIL_TXT_TEMPLATE = getattr(
     settings, "STAGEDOOR_EMAIL_TXT_TEMPLATE", "stagedoor_email.txt"
 )
 
+APPROVAL_HTML_TEMPLATE = getattr(
+    settings, "STAGEDOOR_EMAIL_HTML_TEMPLATE", "stagedoor_approval_email.html"
+)
+APPROVAL_TXT_TEMPLATE = getattr(
+    settings, "STAGEDOOR_EMAIL_TXT_TEMPLATE", "stagedoor_approval_email.txt"
+)
+
 ALLOW_MULTIPLE_EMAILS = getattr(settings, "STAGEDOOR_ALLOW_MULTIPLE_EMAILS", False)
 
 ALLOW_MULTIPLE_PHONE_NUMBERS = getattr(
@@ -55,3 +62,5 @@ ENABLE_EMAIL = getattr(settings, "STAGEDOOR_ENABLE_EMAIL_OVERRIDE", False) or (
 SITE_NAME = getattr(settings, "STAGEDOOR_SITE_NAME", "Django")
 
 DISABLE_USER_CREATION = getattr(settings, "STAGEDOOR_DISABLE_USER_CREATION", False)
+
+REQUIRE_ADMIN_APPROVAL = getattr(settings, "STAGEDOOR_REQUIRE_ADMIN_APPROVAL", False)

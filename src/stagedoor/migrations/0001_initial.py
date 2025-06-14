@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -65,11 +64,11 @@ class Migration(migrations.Migration):
                 (
                     "phone_number",
                     phonenumber_field.modelfields.PhoneNumberField(
-                        help_text="Must include international prefix - e.g. +1 555 555 55555",
+                        help_text="Must include international prefix - e.g. +1 555 555 55555",  # noqa: E501
                         max_length=128,
                         region=None,
                         unique=True,
-                    ), # type: ignore
+                    ),  # type: ignore
                 ),
                 (
                     "potential_user",

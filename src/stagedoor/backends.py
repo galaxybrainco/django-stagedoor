@@ -48,6 +48,14 @@ class StageDoorBackend(BaseBackend):
                 field.name for field in User._meta.get_fields(include_hidden=True)
             ]:
                 user_args["username"] = f"u{generate_token_string()[:8]}"
+            if token_object.email and "email" in [
+                field.name for field in User._meta.get_fields(include_hidden=True)
+            ]:
+                user_args["email"] = token_object.email.email
+            if token_object.phone_number and "phone_number" in [
+                field.name for field in User._meta.get_fields(include_hidden=True)
+            ]:
+                user_args["phone_number"] = token_object.phone_number.phone_number
 
             user, _ = User.objects.get_or_create(**user_args)
 

@@ -17,7 +17,7 @@ from phonenumber_field.formfields import PhoneNumberField
 from phonenumber_field.validators import validate_international_phonenumber
 
 from . import settings as stagedoor_settings
-from .helpers import email_login_link, sms_login_link
+from .helpers import email_admin_approval, email_login_link, sms_login_link
 from .models import generate_token
 
 
@@ -92,26 +92,41 @@ def login_post(request: HttpRequest) -> HttpResponse:
 
     if email:
         if token := generate_token(email=email, next_url=next_url, user=request.user):
-            email_login_link(request=request, token=token)
-            messages.success(
-                request,
-                _("Check your email to log in!"),
-            )
-            return redirect(reverse("stagedoor:token-post"))
+            # breakpoint()
+            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL:
+                token.approved = False
+                token.save()
+                email_admin_approval(request=request, token=token)
+                return redirect(reverse("stagedoor:approval-needed"))
+            else:
+                email_login_link(request=request, token=token)
+                messages.success(
+                    request,
+                    _("Check your email to log in!"),
+                )
+                return redirect(reverse("stagedoor:token-post"))
         else:
-            messages.error(request, _("A user with that email already exists."))
+            messages.error(
+                request, _("A user with that email already exists.")
+            )  # TODO: I think this is the wrong error
             return redirect(stagedoor_settings.LOGIN_URL)
 
     elif phone_number:
         if token := generate_token(
             phone_number=phone_number, next_url=next_url, user=request.user
         ):
-            sms_login_link(request=request, token=token)
-            messages.success(
-                request,
-                _("Check your text messages to log in!"),
-            )
-            return redirect(reverse("stagedoor:token-post"))
+            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL:
+                token.approved = False
+                token.save()
+                email_admin_approval(request=request, token=token)
+                return redirect(reverse("stagedoor:admin-approval"))
+            else:
+                sms_login_link(request=request, token=token)
+                messages.success(
+                    request,
+                    _("Check your text messages to log in!"),
+                )
+                return redirect(reverse("stagedoor:token-post"))
         else:
             messages.error(request, _("A user with that phone number already exists."))
             return redirect(stagedoor_settings.LOGIN_URL)
@@ -132,7 +147,6 @@ def process_token(request: HttpRequest, token: str | None) -> HttpResponse:
         return redirect(stagedoor_settings.LOGIN_URL)
 
     if hasattr(user, "_stagedoor_next_url"):
-        # Get the next URL from the user object, if it was set by our custom `authenticate`.
         next_url = user._stagedoor_next_url  # type: ignore
 
         # Remove the next URL from the user object.
@@ -164,3 +178,7 @@ def logout(request: HttpRequest) -> HttpResponse:
     django_logout(request)
     messages.success(request, _("You have been logged out."))
     return redirect(stagedoor_settings.LOGOUT_REDIRECT)
+
+
+def approval_needed(request: HttpRequest) -> HttpResponse:
+    return render(request, template_name="stagedoor_approval_needed.html")

@@ -26,7 +26,10 @@ jobs:
           python-version-file: "pyproject.toml"
       - name: Install the project
         run: uv sync --all-extras --dev
-      - name: Run tests
-        # For example, using `pytest`
-        run: uv run runtests.py
+      - name: Run tests with coverage
+        run: uv run pytest --cov=stagedoor --cov-report=term-missing --cov-fail-under=90
+      - name: Run linting
+        run: uv run ruff check src/
+      - name: Run type checking
+        run: uv run mypy src/
   

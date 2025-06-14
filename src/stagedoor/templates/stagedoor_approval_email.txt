@@ -1,0 +1,8 @@
+Hello!
+
+New account created on {{ site_name }}: {{ token.email }}
+
+Approve at: https://{{ current_site.domain }}/admin/stagedoor/authtoken/
+
+Thanks, from:
+{{ site_name }}
