@@ -93,10 +93,58 @@ class TestEmailHelpers:
 
         # Check send_mail call arguments
         call_args = mock_send_mail.call_args
-        assert call_args[1]["recipient_list"] == ["admin@example.com"]
+        assert call_args[1]["recipient_list"] == ["webmaster@localhost"]
         assert "New account created on" in call_args[1]["subject"]
         assert call_args[1]["message"] == "Plain text approval message"
         assert call_args[1]["html_message"] == "<html>HTML approval message</html>"
+
+        # Check that context includes contact info for email tokens
+        render_call_args = mock_render.call_args
+        context = render_call_args[0][1]  # Second argument is the context
+        assert context["contact_info"] == "admin@example.com"
+        assert context["contact_type"] == "email"
+
+    @patch("stagedoor.helpers.send_mail")
+    @patch("stagedoor.helpers.get_template")
+    @patch("stagedoor.helpers.render_to_string")
+    @patch("stagedoor.helpers.get_current_site")
+    def test_email_admin_approval_phone(
+        self, mock_get_site, mock_render, mock_get_template, mock_send_mail
+    ):
+        """Test sending admin approval email for phone number."""
+        # Setup mocks
+        mock_site = Mock()
+        mock_site.domain = "example.com"
+        mock_get_site.return_value = mock_site
+        mock_render.return_value = "Plain text approval message"
+
+        mock_template = Mock()
+        mock_template.render.return_value = "<html>HTML approval message</html>"
+        mock_get_template.return_value = mock_template
+
+        # Create test data with phone number
+        phone = PhoneNumber.objects.create(phone_number="+14155551234")
+        token = AuthToken.objects.create(phone_number=phone, token="approval-token")
+        request = self.factory.get("/")
+
+        # Call function
+        email_admin_approval(request, token)
+
+        # Verify mocks were called
+        mock_get_site.assert_called_once_with(request)
+        mock_render.assert_called_once()
+        mock_get_template.assert_called_once()
+        mock_send_mail.assert_called_once()
+
+        # Check send_mail call arguments
+        call_args = mock_send_mail.call_args
+        assert call_args[1]["recipient_list"] == ["webmaster@localhost"]
+
+        # Check that context includes contact info for phone tokens
+        render_call_args = mock_render.call_args
+        context = render_call_args[0][1]  # Second argument is the context
+        assert context["contact_info"] == "+14155551234"
+        assert context["contact_type"] == "phone number"
 
     @patch("stagedoor.helpers.render_to_string")
     def test_email_template_context(self, mock_render):
