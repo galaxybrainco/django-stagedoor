@@ -339,7 +339,7 @@ class TestGenerateToken:
         token = generate_token(email="new@example.com", user=user)
 
         assert token is not None
-        assert token.email.email == "new@example.com"
+        assert token.email.email == "new@example.com"  # type: ignore
         # Since email is new (created=True), token is saved immediately
         assert AuthToken.objects.filter(token=token.token).exists()
 
@@ -391,7 +391,7 @@ class TestGenerateToken:
 
         assert token is not None
         assert token.email == email
-        assert token.email.potential_user == user
+        assert token.email.potential_user == user  # type: ignore
 
     @patch("stagedoor.models.logger")
     def test_generate_token_logs_error(self, mock_logger):
