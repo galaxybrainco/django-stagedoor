@@ -12,6 +12,8 @@ from . import settings as stagedoor_settings
 
 logger = logging.getLogger(__name__)
 
+# mypy: disable-error-code="var-annotated"
+
 
 class Email(models.Model):
     email = models.EmailField(unique=True)
@@ -76,7 +78,7 @@ class AuthToken(models.Model):
         ).delete()
 
     def __str__(self) -> str:
-        return self.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        return self.timestamp.strftime("%Y-%m-%d %H:%M:%S")  # type: ignore
 
 
 def generate_token_string(sms: bool = False) -> str:
@@ -97,9 +99,10 @@ def generate_token(
     user: AbstractBaseUser | AnonymousUser | None = None,
 ) -> AuthToken | None:
     created = False
-    object = None
-    email_object = None
-    phone_number_object = None
+    object: Email | PhoneNumber | None = None
+    email_object: Email | None = None
+    phone_number_object: PhoneNumber | None = None
+    token_string = ""
     if email:
         token_string = generate_token_string()
         email_object, created = Email.objects.get_or_create(email=email)
@@ -127,6 +130,7 @@ def generate_token(
     if object.user and object.user != user:
         return None
     else:
-        object.potential_user = user
-        object.save()
+        if isinstance(user, AbstractBaseUser):
+            object.potential_user = user
+            object.save()
         return token

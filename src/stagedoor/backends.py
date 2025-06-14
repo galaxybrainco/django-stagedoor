@@ -1,6 +1,9 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import AbstractBaseUser
+from django.http import HttpRequest
 
 from . import settings as stagedoor_settings
 from .models import AuthToken, Email, generate_token_string
@@ -21,9 +24,10 @@ class StageDoorBackend(BaseBackend):
         return AuthToken.objects.filter(token=token).first()
 
     def authenticate(
-        self, request, token: str | int | None = None
+        self, request: HttpRequest | None, **kwargs: Any
     ) -> AbstractBaseUser | None:
         """Authenticate a user given a token"""
+        token = kwargs.get("token")
         user = None
         AuthToken.delete_stale()
 
@@ -38,10 +42,10 @@ class StageDoorBackend(BaseBackend):
 
         user_args = {}
 
-        if token_object.email and token_object.email.user:
-            user = token_object.email.user
-        if token_object.phone_number and token_object.phone_number.user:
-            user = token_object.phone_number.user
+        if token_object.email and token_object.email.user:  # type: ignore[attr-defined]
+            user = token_object.email.user  # type: ignore[attr-defined]
+        if token_object.phone_number and token_object.phone_number.user:  # type: ignore[attr-defined]
+            user = token_object.phone_number.user  # type: ignore[attr-defined]
 
         if not user and not stagedoor_settings.DISABLE_USER_CREATION:
             if "username" in [
@@ -51,13 +55,13 @@ class StageDoorBackend(BaseBackend):
             if token_object.email and "email" in [
                 field.name for field in User._meta.get_fields(include_hidden=True)
             ]:
-                user_args["email"] = token_object.email.email
+                user_args["email"] = token_object.email.email  # type: ignore[attr-defined]
             if token_object.phone_number and "phone_number" in [
                 field.name for field in User._meta.get_fields(include_hidden=True)
             ]:
-                user_args["phone_number"] = token_object.phone_number.phone_number
+                user_args["phone_number"] = token_object.phone_number.phone_number  # type: ignore[attr-defined]
 
-            user, _ = User.objects.get_or_create(**user_args)
+            user, _ = User.objects.get_or_create(**user_args)  # type: ignore[arg-type]
 
         if token_object.next_url:
             user._stagedoor_next_url = token_object.next_url  # type: ignore
@@ -67,8 +71,9 @@ class StageDoorBackend(BaseBackend):
 
 class EmailTokenBackend(StageDoorBackend):
     def authenticate(
-        self, request, token: str | int | None = None
+        self, request: HttpRequest | None, **kwargs: Any
     ) -> AbstractBaseUser | None:
+        token = kwargs.get("token")
         if not token:
             return None
         token_object = self.get_token_object(token)
@@ -78,16 +83,16 @@ class EmailTokenBackend(StageDoorBackend):
         if not user:
             return None
 
-        email: Email | None = token_object.email
+        email: Email | None = token_object.email  # type: ignore[assignment]
         if not email:
             # Something has gone _real_ weird, let's be safe and return None
             return None
-        if email.potential_user and email.potential_user != user:
+        if email.potential_user and email.potential_user != user:  # type: ignore[attr-defined]
             # Something has gone _real_ weird, let's be safe and return None
             return None
 
-        email.user = user
-        email.potential_user = None
+        email.user = user  # type: ignore[attr-defined]
+        email.potential_user = None  # type: ignore[attr-defined]
 
         User = get_user_model()
         if "email" in [
@@ -97,14 +102,15 @@ class EmailTokenBackend(StageDoorBackend):
         if stagedoor_settings.SINGLE_USE_LINK:
             token_object.delete()
         user.save()
-        email.save()
+        email.save()  # type: ignore[attr-defined]
         return user
 
 
 class SMSTokenBackend(StageDoorBackend):
     def authenticate(
-        self, request, token: str | int | None = None
+        self, request: HttpRequest | None, **kwargs: Any
     ) -> AbstractBaseUser | None:
+        token = kwargs.get("token")
         if not token:
             return None
         token_object = self.get_token_object(token)
@@ -118,12 +124,12 @@ class SMSTokenBackend(StageDoorBackend):
         if not phone_number:
             # Something has gone _real_ weird, let's be safe and return None
             return None
-        if phone_number.potential_user and phone_number.potential_user != user:
+        if phone_number.potential_user and phone_number.potential_user != user:  # type: ignore[attr-defined]
             # Something has gone _real_ weird, let's be safe and return None
             return None
 
-        phone_number.user = user
-        phone_number.potential_user = None
+        phone_number.user = user  # type: ignore[attr-defined]
+        phone_number.potential_user = None  # type: ignore[attr-defined]
 
         User = get_user_model()
         if "phone_number" in [
@@ -133,5 +139,5 @@ class SMSTokenBackend(StageDoorBackend):
         if stagedoor_settings.SINGLE_USE_LINK:
             token_object.delete()
         user.save()
-        phone_number.save()
+        phone_number.save()  # type: ignore[attr-defined]
         return user

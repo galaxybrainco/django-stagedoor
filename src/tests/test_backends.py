@@ -2,6 +2,7 @@
 Tests for django-stagedoor authentication backends.
 """
 
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +12,12 @@ from django.test import RequestFactory
 from stagedoor.backends import EmailTokenBackend, SMSTokenBackend, StageDoorBackend
 from stagedoor.models import AuthToken, Email, PhoneNumber
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
+
+    User = UserType
+else:
+    User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -109,8 +115,8 @@ class TestStageDoorBackend:
         result = self.backend.authenticate(request, token="test-token")
 
         assert result is not None
-        assert result.email == "new@example.com"
-        assert result.username.startswith("u")
+        assert result.email == "new@example.com"  # type: ignore[attr-defined]
+        assert result.username.startswith("u")  # type: ignore[attr-defined]
 
     @patch("stagedoor.settings.DISABLE_USER_CREATION", False)
     def test_authenticate_create_new_user_with_phone(self):
@@ -122,7 +128,7 @@ class TestStageDoorBackend:
         result = self.backend.authenticate(request, token="test-token")
 
         assert result is not None
-        assert result.username.startswith("u")
+        assert result.username.startswith("u")  # type: ignore[attr-defined]
 
     @patch("stagedoor.settings.DISABLE_USER_CREATION", True)
     def test_authenticate_no_user_creation_disabled(self):
@@ -210,7 +216,7 @@ class TestEmailTokenBackend:
         result = self.backend.authenticate(request, token="test-token")
 
         assert result is not None
-        assert result.email == "new@example.com"
+        assert result.email == "new@example.com"  # type: ignore[attr-defined]
         email.refresh_from_db()
         assert email.user == result
         assert email.potential_user is None

@@ -169,7 +169,7 @@ class TestAuthTokenModel:
         email = Email.objects.create(email="test@example.com")
         token = AuthToken.objects.create(email=email, token="str-token")
         # Should return formatted timestamp
-        expected_format = token.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        expected_format = token.timestamp.strftime("%Y-%m-%d %H:%M:%S")  # type: ignore[attr-defined]
         assert str(token) == expected_format
 
     def test_delete_stale_tokens(self):
@@ -279,7 +279,7 @@ class TestGenerateToken:
 
         assert token is not None
         assert token.email is not None
-        assert token.email.email == "test@example.com"
+        assert token.email.email == "test@example.com"  # type: ignore[attr-defined]
         assert token.phone_number is None
         assert token.next_url == ""
         # Token should be saved to database
@@ -291,7 +291,7 @@ class TestGenerateToken:
 
         assert token is not None
         assert token.phone_number is not None
-        assert str(token.phone_number.phone_number) == "+14155551234"
+        assert str(token.phone_number.phone_number) == "+14155551234"  # type: ignore[attr-defined]
         assert token.email is None
         # Token should be saved to database
         assert AuthToken.objects.filter(token=token.token).exists()

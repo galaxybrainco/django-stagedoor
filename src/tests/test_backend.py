@@ -24,7 +24,7 @@ class StageDoorBackendTests(TestCase):
         token_string = generate_token_string()
         AuthToken.objects.create(token=token_string)
 
-        user = backend.authenticate(None, token_string)
+        user = backend.authenticate(None, token=token_string)
 
         self.assertIsNotNone(user)
 
@@ -32,7 +32,7 @@ class StageDoorBackendTests(TestCase):
         backend = StageDoorBackend()
         token_string = generate_token_string()
 
-        user = backend.authenticate(None, token_string)
+        user = backend.authenticate(None, token=token_string)
 
         self.assertIsNone(user)
 

@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
@@ -17,6 +18,13 @@ from stagedoor.views import (
     process_token,
     token_post,
 )
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
+
+    User = UserType
+else:
+    User = get_user_model()
 
 TEST_EMAIL = "hello@hellocaller.app"
 TEST_PHONE_NUMBER = "+14158675309"
@@ -363,9 +371,7 @@ class TestProcessToken:
     @patch("stagedoor.settings.LOGIN_REDIRECT", "/default/")
     def test_process_token_success(self, mock_login, mock_authenticate):
         """Test successful token processing."""
-        user = get_user_model().objects.create_user(
-            username="testuser", email="test@example.com"
-        )
+        user = User.objects.create_user(username="testuser", email="test@example.com")
         mock_authenticate.return_value = user
 
         request = self.factory.get("/")
@@ -399,9 +405,7 @@ class TestProcessToken:
     @patch("stagedoor.views.django_login")
     def test_process_token_with_next_url(self, mock_login, mock_authenticate):
         """Test token processing with next URL from user."""
-        user = get_user_model().objects.create_user(
-            username="testuser", email="test@example.com"
-        )
+        user = User.objects.create_user(username="testuser", email="test@example.com")
         user._stagedoor_next_url = "/dashboard/"  # type: ignore
         mock_authenticate.return_value = user
 
@@ -420,9 +424,7 @@ class TestProcessToken:
     @patch("stagedoor.views.authenticate")
     def test_process_token_already_authenticated(self, mock_authenticate):
         """Test token processing when user already authenticated."""
-        user = get_user_model().objects.create_user(
-            username="testuser", email="test@example.com"
-        )
+        user = User.objects.create_user(username="testuser", email="test@example.com")
         mock_authenticate.return_value = user
 
         request = self.factory.get("/")
@@ -480,9 +482,7 @@ class TestLogout:
         """Test successful logout."""
         from stagedoor.views import logout
 
-        user = get_user_model().objects.create_user(
-            username="testuser", email="test@example.com"
-        )
+        user = User.objects.create_user(username="testuser", email="test@example.com")
         request = self.factory.get("/")
         request.user = user
         request._messages = Mock()  # type: ignore
