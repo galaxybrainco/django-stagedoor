@@ -74,10 +74,10 @@ Steps:
 1. Waits for CI checks to pass (automatic trigger only)
 2. Analyzes commits since the last tag
 3. Determines appropriate version bump
-4. Updates version in `pyproject.toml`
+4. Updates version in `src/stagedoor/__init__.py`
 5. Commits the version change
 6. Creates and pushes a git tag
-7. Builds the Python package
+7. Builds the Python package (using dynamic versioning from `__init__.py`)
 8. Publishes to PyPI
 9. Creates a GitHub Release
 
@@ -110,6 +110,15 @@ Before the first production release:
 1. Test with a manual workflow dispatch to a test branch
 2. Verify the version bump logic works correctly
 3. Ensure PyPI authentication is properly configured
+
+## Version Management
+
+The project uses **dynamic versioning** with Hatchling:
+
+- Version is stored in `src/stagedoor/__init__.py` as `__version__ = "x.y.z"`
+- `pyproject.toml` declares `dynamic = ["version"]` and points to the `__init__.py` file
+- The build system automatically reads the version from the source file
+- Release workflow updates the version in the source file and commits it
 
 ## Troubleshooting
 

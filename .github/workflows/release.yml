@@ -46,7 +46,7 @@ jobs:
       - name: Get current version
         id: current_version
         run: |
-          CURRENT_VERSION=$(grep -Po '(?<=version = ")[^"]*' _version.txt)
+          CURRENT_VERSION=$(grep -Po '(?<=__version__ = ")[^"]*' src/stagedoor/__init__.py)
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
@@ -111,15 +111,15 @@ jobs:
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "New version: $NEW_VERSION"
 
-      - name: Update version in pyproject.toml
+      - name: Update version in __init__.py
         run: |
-          sed -i 's/${{ steps.current_version.outputs.version }}/${{ steps.new_version.outputs.version }}/' _version.txt
+          sed -i 's/__version__ = "${{ steps.current_version.outputs.version }}"/__version__ = "${{ steps.new_version.outputs.version }}"/' src/stagedoor/__init__.py
 
       - name: Commit version bump
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add pyproject.toml
+          git add src/stagedoor/__init__.py
           git commit -m "chore: bump version to ${{ steps.new_version.outputs.version }}"
           git push
 
