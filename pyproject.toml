@@ -1,6 +1,6 @@
 [project]
 name = "django-stagedoor"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Add your description here"
 requires-python = ">=3.10"
 readme = "README.md"
