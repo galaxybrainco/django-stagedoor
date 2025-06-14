@@ -2,7 +2,7 @@
 
 ## Overview
 
-This GitHub Action workflow automatically creates semver tags and publishes your package to PyPI on successful merges to the `main` branch.
+This GitHub Action workflow automatically creates semver tags and publishes your package to PyPI after successful CI checks on the `main` branch. The release workflow only runs after the "Python package" workflow completes successfully.
 
 ## Setup Instructions
 
@@ -64,14 +64,22 @@ You can also manually trigger the workflow from the Actions tab with a specific 
 
 ### Workflow Steps
 
-1. Analyzes commits since the last tag
-2. Determines appropriate version bump
-3. Updates version in `pyproject.toml`
-4. Commits the version change
-5. Creates and pushes a git tag
-6. Builds the Python package
-7. Publishes to PyPI
-8. Creates a GitHub Release
+The release workflow is triggered in two ways:
+
+- **Automatically**: After the "Python package" workflow completes successfully on the main branch
+- **Manually**: Via workflow dispatch from the Actions tab
+
+Steps:
+
+1. Waits for CI checks to pass (automatic trigger only)
+2. Analyzes commits since the last tag
+3. Determines appropriate version bump
+4. Updates version in `pyproject.toml`
+5. Commits the version change
+6. Creates and pushes a git tag
+7. Builds the Python package
+8. Publishes to PyPI
+9. Creates a GitHub Release
 
 ## Commit Message Examples
 
