@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponse
@@ -190,6 +191,340 @@ class LoginPostTests(TestCase):
             response = login_post(request)
             self.assertEqual(302, response.status_code)
             self.assertEqual(reverse("stagedoor:approval-needed"), response.url)  # type: ignore
+
+    def test_admin_approval_phone_number(self):
+        """Test admin approval flow for phone numbers."""
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            # Both email and phone use the same approval-needed URL
+            self.assertEqual(reverse("stagedoor:approval-needed"), response.url)  # type: ignore
+            # Token should be marked as not approved
+            token = AuthToken.objects.filter(
+                phone_number__phone_number=TEST_PHONE_NUMBER
+            ).first()
+            self.assertIsNotNone(token)
+            self.assertFalse(token.approved)  # type: ignore
+
+    def test_admin_approval_bypass_existing_user_email(self):
+        """Test admin approval is bypassed when email has existing user."""
+        # Create user and associate with email
+        user = User.objects.create_user(username="testuser", email=TEST_EMAIL)
+        Email.objects.create(email=TEST_EMAIL, user=user)
+
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"email": TEST_EMAIL})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            # Should bypass approval and go to token-post
+            self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+
+    def test_admin_approval_bypass_potential_user_email(self):
+        """Test admin approval is bypassed when email has potential user."""
+        # Create user and associate as potential user
+        user = User.objects.create_user(username="testuser", email="other@email.com")
+        Email.objects.create(email=TEST_EMAIL, potential_user=user)
+
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"email": TEST_EMAIL})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+
+    def test_admin_approval_bypass_existing_user_phone(self):
+        """Test admin approval is bypassed when phone has existing user."""
+        # Create user and associate with phone number
+        user = User.objects.create_user(username="testuser", email="test@example.com")
+        PhoneNumber.objects.create(phone_number=TEST_PHONE_NUMBER, user=user)
+
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            # Should bypass approval and go to token-post
+            self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+
+    def test_admin_approval_bypass_potential_user_phone(self):
+        """Test admin approval is bypassed when phone has potential user."""
+        # Create user and associate as potential user
+        user = User.objects.create_user(username="testuser", email="other@email.com")
+        PhoneNumber.objects.create(phone_number=TEST_PHONE_NUMBER, potential_user=user)
+
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+
+    def test_next_url_parsing_multiple_values(self):
+        """Test next URL parsing when multiple next values exist."""
+        factory = RequestFactory()
+        request = factory.post("/?next=/first&next=/second", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        # Should use first value
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertEqual("/first", token.next_url)  # type: ignore
+
+    def test_next_url_parsing_empty_query(self):
+        """Test next URL parsing with empty query parameters."""
+        factory = RequestFactory()
+        request = factory.post("/?", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertEqual("", token.next_url)  # type: ignore
+
+    def test_next_url_parsing_no_next_param(self):
+        """Test next URL parsing when no next parameter exists."""
+        factory = RequestFactory()
+        request = factory.post("/?other=value", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertEqual("", token.next_url)  # type: ignore
+
+    def test_next_url_parsing_complex_url(self):
+        """Test next URL parsing with complex URL."""
+        factory = RequestFactory()
+        # URL encode the complex next parameter properly
+        request = factory.post(
+            "/?next=%2Fdashboard%3Ftab%3Dprofile%26sort%3Ddate", {"email": TEST_EMAIL}
+        )
+        self.setup_request(request)
+        login_post(request)
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertEqual("/dashboard?tab=profile&sort=date", token.next_url)  # type: ignore
+
+    @patch("stagedoor.views.email_admin_approval")
+    def test_email_admin_approval_called(self, mock_email_admin):
+        """Test that email_admin_approval is called correctly."""
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"email": TEST_EMAIL})
+            self.setup_request(request)
+            login_post(request)
+            mock_email_admin.assert_called_once()
+            # Verify correct arguments
+            call_args = mock_email_admin.call_args
+            self.assertEqual(call_args[1]["request"], request)
+            self.assertIsInstance(call_args[1]["token"], AuthToken)
+
+    @patch("stagedoor.views.sms_login_link")
+    def test_sms_login_link_called(self, mock_sms_login):
+        """Test that sms_login_link is called correctly."""
+        factory = RequestFactory()
+        request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+        self.setup_request(request)
+        login_post(request)
+        mock_sms_login.assert_called_once()
+        # Verify correct arguments
+        call_args = mock_sms_login.call_args
+        self.assertEqual(call_args[1]["request"], request)
+        self.assertIsInstance(call_args[1]["token"], AuthToken)
+
+    @patch("stagedoor.views.email_login_link")
+    def test_email_login_link_called(self, mock_email_login):
+        """Test that email_login_link is called correctly."""
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        mock_email_login.assert_called_once()
+        # Verify correct arguments
+        call_args = mock_email_login.call_args
+        self.assertEqual(call_args[1]["request"], request)
+        self.assertIsInstance(call_args[1]["token"], AuthToken)
+
+    @patch("stagedoor.views.email_admin_approval")
+    def test_phone_admin_approval_called(self, mock_email_admin):
+        """Test email_admin_approval is called for phone numbers requiring approval."""
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+            self.setup_request(request)
+            login_post(request)
+            mock_email_admin.assert_called_once()
+            # Verify correct arguments
+            call_args = mock_email_admin.call_args
+            self.assertEqual(call_args[1]["request"], request)
+            self.assertIsInstance(call_args[1]["token"], AuthToken)
+
+    def test_success_messages_email(self):
+        """Test correct success messages for email login."""
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "Check your email to log in!")
+
+    def test_success_messages_phone(self):
+        """Test correct success messages for phone login."""
+        factory = RequestFactory()
+        request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+        self.setup_request(request)
+        login_post(request)
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "Check your text messages to log in!")
+
+    @patch("stagedoor.views.generate_token")
+    def test_error_messages_generate_token_failure_email(self, mock_generate_token):
+        """Test error messages when generate_token fails for email."""
+        mock_generate_token.return_value = None
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "A user with that email already exists.")
+
+    @patch("stagedoor.views.generate_token")
+    def test_error_messages_generate_token_failure_phone(self, mock_generate_token):
+        """Test error messages when generate_token fails for phone."""
+        mock_generate_token.return_value = None
+        factory = RequestFactory()
+        request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+        self.setup_request(request)
+        login_post(request)
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "A user with that phone number already exists."
+        )
+
+    def test_error_messages_invalid_form(self):
+        """Test error messages for invalid form data."""
+        factory = RequestFactory()
+        request = factory.post("/", {"contact": "invalid"})
+        self.setup_request(request)
+        login_post(request)
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "Please use a valid email address or phone number."
+        )
+
+    def test_token_approval_state_normal_flow_email(self):
+        """Test token approval state in normal flow for email."""
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL})
+        self.setup_request(request)
+        login_post(request)
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertTrue(token.approved)  # type: ignore
+
+    def test_token_approval_state_normal_flow_phone(self):
+        """Test token approval state in normal flow for phone."""
+        factory = RequestFactory()
+        request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+        self.setup_request(request)
+        login_post(request)
+        token = AuthToken.objects.filter(
+            phone_number__phone_number=TEST_PHONE_NUMBER
+        ).first()
+        self.assertTrue(token.approved)  # type: ignore
+
+    def test_token_approval_state_admin_approval_email(self):
+        """Test token approval state when admin approval required for email."""
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"email": TEST_EMAIL})
+            self.setup_request(request)
+            login_post(request)
+            token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+            self.assertFalse(
+                token.approved  # type: ignore
+            )  # Should be False when admin approval required  # type: ignore
+
+    def test_token_approval_state_admin_approval_phone(self):
+        """Test token approval state when admin approval required for phone."""
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+            self.setup_request(request)
+            login_post(request)
+            token = AuthToken.objects.filter(
+                phone_number__phone_number=TEST_PHONE_NUMBER
+            ).first()
+            self.assertFalse(
+                token.approved  # type: ignore
+            )  # Should be False when admin approval required  # type: ignore
+
+    def test_authenticated_user_email(self):
+        """Test login_post with authenticated user using email."""
+        user = User.objects.create_user(username="testuser", email="user@example.com")
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL})
+        request.user = user  # Set authenticated user
+        self.setup_request(request)
+        request.user = user  # Need to set again after setup_request
+        response = login_post(request)
+        # Should still work and potentially associate with user
+        self.assertEqual(302, response.status_code)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+        token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
+        self.assertIsNotNone(token)
+
+    def test_authenticated_user_phone(self):
+        """Test login_post with authenticated user using phone."""
+        user = User.objects.create_user(username="testuser", email="user@example.com")
+        factory = RequestFactory()
+        request = factory.post("/", {"phone_number": TEST_PHONE_NUMBER})
+        request.user = user  # Set authenticated user
+        self.setup_request(request)
+        request.user = user  # Need to set again after setup_request
+        response = login_post(request)
+        # Should still work and potentially associate with user
+        self.assertEqual(302, response.status_code)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+        token = AuthToken.objects.filter(
+            phone_number__phone_number=TEST_PHONE_NUMBER
+        ).first()
+        self.assertIsNotNone(token)
+
+    def test_authenticated_user_admin_approval(self):
+        """Test authenticated user with admin approval requirement."""
+        user = User.objects.create_user(username="testuser", email="user@example.com")
+        factory = RequestFactory()
+        with patch("stagedoor.settings.REQUIRE_ADMIN_APPROVAL", True):
+            request = factory.post("/", {"email": TEST_EMAIL})
+            request.user = user  # Set authenticated user
+            self.setup_request(request)
+            request.user = user  # Need to set again after setup_request
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            self.assertEqual(reverse("stagedoor:approval-needed"), response.url)  # type: ignore
+
+    def test_fallback_redirect(self):
+        """Test fallback redirect when neither email nor phone is processed."""
+        # Edge case where form validates but no email/phone processing occurs
+        # We'll create a mock form instance that is valid but has None values
+        mock_form = Mock()
+        mock_form.is_valid.return_value = True
+        mock_form.cleaned_data = {"email": None, "phone_number": None}
+
+        with patch("stagedoor.views.LoginForm", return_value=mock_form):
+            factory = RequestFactory()
+            request = factory.post("/", {"contact": "something"})
+            self.setup_request(request)
+            response = login_post(request)
+            self.assertEqual(302, response.status_code)
+            self.assertEqual(stagedoor_settings.LOGIN_URL, response.url)  # type: ignore
 
 
 class TokenPostTests(TestCase):

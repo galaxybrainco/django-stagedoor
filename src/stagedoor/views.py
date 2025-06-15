@@ -95,7 +95,9 @@ def login_post(request: HttpRequest) -> HttpResponse:
     if email:
         if token := generate_token(email=email, next_url=next_url, user=request.user):
             # breakpoint()
-            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL:
+            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL and not (
+                token.email.user or token.email.potential_user
+            ):
                 token.approved = False
                 token.save()
                 email_admin_approval(request=request, token=token)
@@ -117,11 +119,13 @@ def login_post(request: HttpRequest) -> HttpResponse:
         if token := generate_token(
             phone_number=phone_number, next_url=next_url, user=request.user
         ):
-            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL:
+            if stagedoor_settings.REQUIRE_ADMIN_APPROVAL and not (
+                token.phone_number.user or token.phone_number.potential_user
+            ):
                 token.approved = False
                 token.save()
                 email_admin_approval(request=request, token=token)
-                return redirect(reverse("stagedoor:admin-approval"))
+                return redirect(reverse("stagedoor:approval-needed"))
             else:
                 sms_login_link(request=request, token=token)
                 messages.success(
