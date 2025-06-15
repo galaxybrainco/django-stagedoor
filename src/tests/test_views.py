@@ -207,7 +207,7 @@ class LoginPostTests(TestCase):
                 phone_number__phone_number=TEST_PHONE_NUMBER
             ).first()
             self.assertIsNotNone(token)
-            self.assertFalse(token.approved)
+            self.assertFalse(token.approved)  # type: ignore
 
     def test_admin_approval_bypass_existing_user_email(self):
         """Test admin approval is bypassed when email has existing user."""
@@ -426,7 +426,7 @@ class LoginPostTests(TestCase):
         self.setup_request(request)
         login_post(request)
         token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
-        self.assertTrue(token.approved)  # Should be True by default  # type: ignore
+        self.assertTrue(token.approved)  # type: ignore
 
     def test_token_approval_state_normal_flow_phone(self):
         """Test token approval state in normal flow for phone."""
@@ -437,7 +437,7 @@ class LoginPostTests(TestCase):
         token = AuthToken.objects.filter(
             phone_number__phone_number=TEST_PHONE_NUMBER
         ).first()
-        self.assertTrue(token.approved)  # Should be True by default  # type: ignore
+        self.assertTrue(token.approved)  # type: ignore
 
     def test_token_approval_state_admin_approval_email(self):
         """Test token approval state when admin approval required for email."""
@@ -448,7 +448,7 @@ class LoginPostTests(TestCase):
             login_post(request)
             token = AuthToken.objects.filter(email__email=TEST_EMAIL).first()
             self.assertFalse(
-                token.approved
+                token.approved  # type: ignore
             )  # Should be False when admin approval required  # type: ignore
 
     def test_token_approval_state_admin_approval_phone(self):
@@ -462,7 +462,7 @@ class LoginPostTests(TestCase):
                 phone_number__phone_number=TEST_PHONE_NUMBER
             ).first()
             self.assertFalse(
-                token.approved
+                token.approved  # type: ignore
             )  # Should be False when admin approval required  # type: ignore
 
     def test_authenticated_user_email(self):
