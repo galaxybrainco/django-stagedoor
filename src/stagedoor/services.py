@@ -4,6 +4,7 @@ Service layer for django-stagedoor authentication operations.
 
 from typing import TYPE_CHECKING
 
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from phonenumber_field.validators import validate_international_phonenumber
@@ -13,15 +14,13 @@ from .models import AuthToken, generate_token
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
-    User = str
-
 
 def create_login_token(
     request: "HttpRequest",
     email: str | None = None,
     phone_number: str | None = None,
     next_url: str | None = None,
-    user: "User" | None = None,
+    user: AbstractBaseUser | AnonymousUser | None = None,
 ) -> AuthToken | None:
     """Create a login token for the given email or phone number.
 
