@@ -64,21 +64,24 @@ See `stagedoor/settings.py` for available configuration options.
 ## Usage Examples
 
 ### Cleanup stale tokens
+
 ```bash
 python manage.py cleanup_stale_tokens
 ```
 
 ### Basic usage
+
 In your views:
+
 ```python
 from stagedoor.services import create_login_token
 
 def login_view(request):
     # Create a token for user
     token = create_login_token(request, email="user@example.com")
-    
+
     # Send the token via email
     # ... email sending logic here
-    
+
     return redirect("token_post_page")
 ```
