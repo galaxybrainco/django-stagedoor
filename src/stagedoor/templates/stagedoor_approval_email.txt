@@ -1,8 +1,10 @@
+{% block content %}
 Hello!
 
-New account created on {{ site_name }}: {{ token.email }}
+Your account is awaiting approval for {{site_name}}. Once approved, you will receive another email with a login link.
 
-Approve at: https://{{ current_site.domain }}/admin/stagedoor/authtoken/
+If you did not request this, please contact support at {{support_email}}.
 
 Thanks, from:
-{{ site_name }}
+{{site_name}}
+{% endblock %}

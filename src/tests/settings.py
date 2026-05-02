@@ -63,7 +63,22 @@ DATABASES = {
     }
 }
 
-# Password validation
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    "stagedoor.backends.EmailTokenBackend",
+    "stagedoor.backends.SMSTokenBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Stagedoor settings
+STAGEDOOR_ENABLE_SMS_OVERRIDE = True
+STAGEDOOR_ENABLE_EMAIL_OVERRIDE = True
+
+# Test-specific settings
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
+
 AUTH_PASSWORD_VALIDATORS: list[str] = []
 
 # Internationalization
@@ -80,34 +95,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Site ID for contrib.sites
 SITE_ID = 1
-
-# Authentication backends
-AUTHENTICATION_BACKENDS = [
-    "stagedoor.backends.EmailTokenBackend",
-    "stagedoor.backends.SMSTokenBackend",
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-# Stagedoor settings
-STAGEDOOR_ENABLE_SMS_OVERRIDE = True
-STAGEDOOR_ENABLE_EMAIL_OVERRIDE = True
-
-# Test-specific settings
-PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.MD5PasswordHasher",  # Fast for tests
-]
-
-
-# Disable migrations for faster tests
-class DisableMigrations:
-    def __contains__(self, item):
-        return True
-
-    def __getitem__(self, item):
-        return None
-
-
-MIGRATION_MODULES = DisableMigrations()
 
 # Logging
 LOGGING = {

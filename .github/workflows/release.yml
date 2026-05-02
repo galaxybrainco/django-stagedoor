@@ -1,12 +1,6 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: ["Python package"]
-    types:
-      - completed
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       version_bump:
@@ -22,7 +16,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     permissions:
       contents: write
       id-token: write
@@ -56,28 +49,9 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "bump_type=${{ github.event.inputs.version_bump }}" >> $GITHUB_OUTPUT
           else
-            # Default to patch unless commit messages indicate otherwise
-            BUMP_TYPE="patch"
-
-            # Get commits since last tag
-            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-            if [ -z "$LAST_TAG" ]; then
-              COMMITS=$(git log --pretty=format:"%s%n%b" --no-merges)
-            else
-              COMMITS=$(git log --pretty=format:"%s%n%b" --no-merges $LAST_TAG..HEAD)
-            fi
-
-            # Check for major version indicator
-            if echo "$COMMITS" | grep -qi "Major Version Bump"; then
-              BUMP_TYPE="major"
-            # Check for minor version indicator
-            elif echo "$COMMITS" | grep -qi "Minor Version Bump"; then
-              BUMP_TYPE="minor"
-            fi
-
-            echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
           fi
-          echo "Bump type: $BUMP_TYPE"
+          echo "Bump type: ${{ github.event.inputs.version_bump }}"
 
       - name: Calculate new version
         id: new_version

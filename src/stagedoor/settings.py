@@ -9,12 +9,17 @@ SMS_TOKEN_LENGTH = getattr(settings, "STAGEDOOR_SMS_TOKEN_LENGTH", 6)
 LOGIN_URL = getattr(settings, "STAGEDOOR_LOGIN_URL", settings.LOGIN_URL)
 
 LOGIN_REDIRECT = getattr(
-    settings, "STAGEDOOR_LOGIN_REDIRECT", settings.LOGIN_REDIRECT_URL
+    settings, "STAGEDOOR_LOGIN_REDIRECT", getattr(settings, "LOGIN_REDIRECT_URL", "/")
 )
+
 LOGOUT_REDIRECT = getattr(
     settings,
     "STAGEDOOR_LOGOUT_REDIRECT",
-    settings.LOGOUT_REDIRECT_URL or settings.LOGIN_REDIRECT_URL,
+    getattr(
+        settings,
+        "LOGOUT_REDIRECT_URL",
+        getattr(settings, "LOGIN_REDIRECT_URL", "/"),
+    ),
 )
 
 DEFAULT_FROM_EMAIL = getattr(
@@ -35,10 +40,10 @@ EMAIL_TXT_TEMPLATE = getattr(
 )
 
 APPROVAL_HTML_TEMPLATE = getattr(
-    settings, "STAGEDOOR_EMAIL_HTML_TEMPLATE", "stagedoor_approval_email.html"
+    settings, "STAGEDOOR_APPROVAL_HTML_TEMPLATE", "stagedoor_approval_email.html"
 )
 APPROVAL_TXT_TEMPLATE = getattr(
-    settings, "STAGEDOOR_EMAIL_TXT_TEMPLATE", "stagedoor_approval_email.txt"
+    settings, "STAGEDOOR_APPROVAL_TXT_TEMPLATE", "stagedoor_approval_email.txt"
 )
 
 ALLOW_MULTIPLE_EMAILS = getattr(settings, "STAGEDOOR_ALLOW_MULTIPLE_EMAILS", False)

@@ -36,5 +36,5 @@ class AuthTokenAdmin(admin.ModelAdmin):
             approved_count += 1
 
         self.message_user(
-            request, f"Successfully approved and sent {approved_count} searches."
+            request, f"Successfully approved and sent {approved_count} tokens."
         )
