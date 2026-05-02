@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 from random import SystemRandom
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -99,21 +100,21 @@ def generate_token(
     user: AbstractBaseUser | AnonymousUser | None = None,
 ) -> AuthToken | None:
     created = False
-    object: Email | PhoneNumber | None = None
+    object_instance: Email | PhoneNumber | None = None
     email_object: Email | None = None
     phone_number_object: PhoneNumber | None = None
     token_string = ""
     if email:
         token_string = generate_token_string()
         email_object, created = Email.objects.get_or_create(email=email)
-        object = email_object
+        object_instance = email_object
     if phone_number:
         token_string = generate_token_string(sms=True)
         phone_number_object, created = PhoneNumber.objects.get_or_create(
             phone_number=phone_number,
         )
-        object = phone_number_object
-    if not object:
+        object_instance = phone_number_object
+    if not object_instance:
         logger.error("Tried to generate a token for neither email nor sms")
         return None
 
@@ -127,10 +128,10 @@ def generate_token(
     if (not user or not user.is_authenticated) or created:
         token.save()
         return token
-    if object.user and object.user != user:
+    if object_instance.user and object_instance.user != user:
         return None
     else:
         if isinstance(user, AbstractBaseUser):
-            object.potential_user = user
-            object.save()
+            object_instance.potential_user = user
+            object_instance.save()
         return token

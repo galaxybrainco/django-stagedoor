@@ -1,6 +1,10 @@
 name: Python package
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -24,7 +28,7 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
       - name: Install the project
-        run: uv sync --all-extras --dev
+        run: uv sync --frozen
       - name: Run pre-commit hooks
         run: |
           uv run pre-commit run --all-files --show-diff-on-failure

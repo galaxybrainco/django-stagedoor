@@ -7,12 +7,6 @@ import pytest
 from django.conf import settings
 
 
-def pytest_configure():
-    """Configure Django settings for tests."""
-    if not settings.configured:
-        django.setup()
-
-
 @pytest.fixture(autouse=True)
 def enable_db_access_for_all_tests(db):
     """

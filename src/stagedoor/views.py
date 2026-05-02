@@ -94,7 +94,6 @@ def login_post(request: HttpRequest) -> HttpResponse:
 
     if email:
         if token := generate_token(email=email, next_url=next_url, user=request.user):
-            # breakpoint()
             if stagedoor_settings.REQUIRE_ADMIN_APPROVAL and not (
                 token.email.user or token.email.potential_user
             ):
@@ -152,11 +151,10 @@ def process_token(request: HttpRequest, token: str | None) -> HttpResponse:
         )
         return redirect(stagedoor_settings.LOGIN_URL)
 
-    if hasattr(user, "_stagedoor_next_url"):
-        next_url = user._stagedoor_next_url  # type: ignore
+    if request.session.get("_stagedoor_next_url"):
+        next_url = request.session.pop("_stagedoor_next_url")
 
-        # Remove the next URL from the user object.
-        del user._stagedoor_next_url  # type: ignore
+        # Remove the next URL from the session.
     else:
         next_url = stagedoor_settings.LOGIN_REDIRECT
 

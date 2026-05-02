@@ -1,14 +1,28 @@
 [project]
 name = "django-stagedoor"
 dynamic = ["version"]
-description = "Add your description here"
+description = "Easy email or SMS based login for Django"
 requires-python = ">=3.10"
 readme = "README.md"
 authors = [
     { name = "Philip James", email = "phildini@phildini.net" }
 ]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ["django", "authentication", "passwordless", "email", "sms"]
 dependencies = [
-    "django>=4.2",
+    "django>=5.2",
     "django-phonenumber-field[phonenumbers]>=8.0.0",
     "twilio>=9.5.1",
 ]
@@ -133,6 +147,12 @@ exclude_lines = [
 
 [tool.bandit]
 exclude_dirs = ["tests", "venv", ".venv"]
+
+[project.urls]
+Homepage = "https://github.com/phildini/django-stagedoor"
+Repository = "https://github.com/phildini/django-stagedoor"
+Documentation = "https://github.com/phildini/django-stagedoor#readme"
+Issues = "https://github.com/phildini/django-stagedoor/issues"
 skips = ["B101", "B105"]  # Skip assert_used test
 
 [tool.pydocstyle]

@@ -97,7 +97,7 @@ def sms_login_link(request: HttpRequest, token: AuthToken) -> None:
 
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         client.messages.create(
-            body=f"Your {stagedoor_settings.SITE_NAME} code is {token.token}\n\nGo to https://{current_site.domain}/auth/token to login.",  # noqa: E501
+            body=f"Your {stagedoor_settings.SITE_NAME} code is {token.token}\n\nGo to {request.build_absolute_uri(reverse('stagedoor:token-login', kwargs={'token': token.token}))}.",  # noqa: E501
             from_=settings.TWILIO_NUMBER,
             to=str(token.phone_number.phone_number),  # type: ignore
         )
