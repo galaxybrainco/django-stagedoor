@@ -15,7 +15,11 @@ LOGIN_REDIRECT = getattr(
 LOGOUT_REDIRECT = getattr(
     settings,
     "STAGEDOOR_LOGOUT_REDIRECT",
-    getattr(settings, "LOGOUT_REDIRECT_URL", getattr(settings, "LOGIN_REDIRECT_URL", "/")),
+    getattr(
+        settings,
+        "LOGOUT_REDIRECT_URL",
+        getattr(settings, "LOGIN_REDIRECT_URL", "/"),
+    ),
 )
 
 DEFAULT_FROM_EMAIL = getattr(

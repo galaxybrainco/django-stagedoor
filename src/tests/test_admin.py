@@ -254,7 +254,7 @@ class TestAuthTokenAdmin:
         # Check message was added
         msgs = list(messages)
         assert len(msgs) == 1
-        assert "Successfully approved and sent 1 searches" in str(msgs[0])
+        assert "Successfully approved and sent 1 tokens" in str(msgs[0])
 
     def test_admin_action_through_interface(self, admin_client):
         """Test the admin action through the web interface."""
@@ -284,7 +284,7 @@ class TestAuthTokenAdmin:
         # Check for success message in the response
         messages = list(response.context["messages"])
         assert len(messages) == 1
-        assert "Successfully approved and sent 1 searches" in str(messages[0])
+        assert "Successfully approved and sent 1 tokens" in str(messages[0])
 
     def test_admin_action_with_phone_token(self, admin_client):
         """Test the admin action with phone tokens."""
@@ -350,7 +350,7 @@ class TestAuthTokenAdmin:
         # Check for success message
         messages = list(response.context["messages"])
         assert len(messages) == 1
-        assert "Successfully approved and sent 2 searches" in str(messages[0])
+        assert "Successfully approved and sent 2 tokens" in str(messages[0])
 
     def test_admin_filters_and_search(self, admin_client):
         """Test that admin page loads without errors."""

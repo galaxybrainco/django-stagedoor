@@ -3,6 +3,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
 from django.http import HttpRequest
 from django.template.loader import get_template, render_to_string
+from django.urls import reverse
 
 from . import settings as stagedoor_settings
 from .models import AuthToken
@@ -84,7 +85,6 @@ def email_admin_approval(request: HttpRequest, token: AuthToken) -> None:
 
 
 def sms_login_link(request: HttpRequest, token: AuthToken) -> None:
-    current_site = get_current_site(request)
     if (
         hasattr(settings, "TWILIO_ACCOUNT_SID")
         and hasattr(settings, "TWILIO_AUTH_TOKEN")
@@ -95,9 +95,15 @@ def sms_login_link(request: HttpRequest, token: AuthToken) -> None:
     ):
         from twilio.rest import Client
 
+        login_url = request.build_absolute_uri(
+            reverse("stagedoor:token-login", kwargs={"token": token.token})
+        )
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         client.messages.create(
-            body=f"Your {stagedoor_settings.SITE_NAME} code is {token.token}\n\nGo to {request.build_absolute_uri(reverse('stagedoor:token-login', kwargs={'token': token.token}))}.",  # noqa: E501
+            body=(
+                f"Your {stagedoor_settings.SITE_NAME} code is {token.token}\n\n"
+                f"Go to {login_url}."
+            ),
             from_=settings.TWILIO_NUMBER,
             to=str(token.phone_number.phone_number),  # type: ignore
         )

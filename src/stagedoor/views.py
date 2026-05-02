@@ -151,10 +151,10 @@ def process_token(request: HttpRequest, token: str | None) -> HttpResponse:
         )
         return redirect(stagedoor_settings.LOGIN_URL)
 
-    if request.session.get("_stagedoor_next_url"):
-        next_url = request.session.pop("_stagedoor_next_url")
-
-        # Remove the next URL from the session.
+    next_url = getattr(user, "_stagedoor_next_url", None)
+    if next_url:
+        # Remove the next URL from the user object.
+        delattr(user, "_stagedoor_next_url")
     else:
         next_url = stagedoor_settings.LOGIN_REDIRECT
 

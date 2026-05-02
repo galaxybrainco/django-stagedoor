@@ -2,9 +2,7 @@
 Pytest configuration for django-stagedoor tests.
 """
 
-import django
 import pytest
-from django.conf import settings
 
 
 @pytest.fixture(autouse=True)

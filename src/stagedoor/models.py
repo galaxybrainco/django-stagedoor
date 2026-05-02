@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 from random import SystemRandom
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
