@@ -112,7 +112,6 @@ LOGGING = {
         "level": "WARNING",
     },
 }
-}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS: list[str] = []
