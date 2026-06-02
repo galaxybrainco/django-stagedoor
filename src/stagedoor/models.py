@@ -102,7 +102,7 @@ def generate_token(
     object_instance: Email | PhoneNumber | None = None
     email_object: Email | None = None
     phone_number_object: PhoneNumber | None = None
-    token_string = ""
+    token_string = ""  # nosec
     if email:
         token_string = generate_token_string()
         email_object, created = Email.objects.get_or_create(email=email)
