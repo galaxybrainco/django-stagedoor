@@ -1,5 +1,10 @@
 #! /bin/sh
+# Use `uv publish` for PyPI publishing with trusted publishing.
+# Make sure you have PyPI trusted publishing configured for this repo.
+# See: https://docs.pypi.org/trusted-publishers/
+
+set -e
 
 rm -rf dist/
-python3 -m build
-python3 -m twine upload dist/*
+uv build
+uv publish
