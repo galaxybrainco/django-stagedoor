@@ -157,6 +157,18 @@ class LoginPostTests(TestCase):
             AuthToken.objects.filter(email__email=TEST_EMAIL).first().next_url,  # type: ignore
         )
 
+    def test_happy_path_redirect_from_form_field(self):
+        factory = RequestFactory()
+        request = factory.post("/", {"email": TEST_EMAIL, "next": "/from-post"})
+        self.setup_request(request)
+        response = login_post(request)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual(reverse("stagedoor:token-post"), response.url)  # type: ignore
+        self.assertEqual(
+            "/from-post",
+            AuthToken.objects.filter(email__email=TEST_EMAIL).first().next_url,  # type: ignore
+        )
+
     def test_email_exists(self):
         Email.objects.create(email=TEST_EMAIL)
         factory = RequestFactory()
