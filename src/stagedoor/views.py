@@ -88,9 +88,12 @@ def login_post(request: HttpRequest) -> HttpResponse:
     email = form.cleaned_data["email"]
     phone_number = form.cleaned_data["phone_number"]
 
-    next_url: str | None = ""
-    if parsed_next_url := parse_qs(urlparse(request.get_full_path()).query).get("next"):
-        next_url = parsed_next_url[0]
+    next_url: str | None = form.cleaned_data.get("next") or ""
+    if not next_url:
+        if parsed_next_url := parse_qs(urlparse(request.get_full_path()).query).get(
+            "next"
+        ):
+            next_url = parsed_next_url[0]
 
     if email:
         if token := generate_token(email=email, next_url=next_url, user=request.user):

@@ -35,6 +35,9 @@ class StageDoorBackend(BaseBackend):
         if not token_object:
             return None
 
+        if not token_object.approved:
+            return None
+
         if stagedoor_settings.SINGLE_USE_LINK:
             token_object.delete()
 

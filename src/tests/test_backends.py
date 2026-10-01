@@ -154,6 +154,17 @@ class TestStageDoorBackend:
         assert hasattr(result, "_stagedoor_next_url")
         assert result._stagedoor_next_url == "/dashboard"  # type: ignore
 
+    def test_authenticate_unapproved_token_rejected(self):
+        """Test that an unapproved token does not authenticate."""
+        user = User.objects.create_user(username="testuser", email="test@example.com")
+        email = Email.objects.create(email="test@example.com", user=user)
+        AuthToken.objects.create(email=email, token="test-token", approved=False)
+
+        request = self.factory.get("/")
+        result = self.backend.authenticate(request, token="test-token")
+
+        assert result is None
+
     @patch("stagedoor.settings.DISABLE_USER_CREATION", False)
     def test_authenticate_get_or_create_user(self):
         """Test that get_or_create is used for user creation."""
@@ -220,6 +231,17 @@ class TestEmailTokenBackend:
         email.refresh_from_db()
         assert email.user == result
         assert email.potential_user is None
+
+    def test_authenticate_unapproved_token_rejected(self):
+        """Test that an unapproved email token does not authenticate."""
+        email = Email.objects.create(email="new@example.com")
+        AuthToken.objects.create(email=email, token="test-token", approved=False)
+
+        request = self.factory.get("/")
+        result = self.backend.authenticate(request, token="test-token")
+
+        assert result is None
+        assert not User.objects.filter(email="new@example.com").exists()
 
     def test_authenticate_potential_user_mismatch(self):
         """Test authentication fails when potential user doesn't match."""
@@ -294,6 +316,16 @@ class TestSMSTokenBackend:
         phone.refresh_from_db()
         assert phone.user == result
         assert phone.potential_user is None
+
+    def test_authenticate_unapproved_token_rejected(self):
+        """Test that an unapproved SMS token does not authenticate."""
+        phone = PhoneNumber.objects.create(phone_number="+14155551234")
+        AuthToken.objects.create(phone_number=phone, token="test-token", approved=False)
+
+        request = self.factory.get("/")
+        result = self.backend.authenticate(request, token="test-token")
+
+        assert result is None
 
     def test_authenticate_potential_user_mismatch(self):
         """Test authentication fails when potential user doesn't match."""
